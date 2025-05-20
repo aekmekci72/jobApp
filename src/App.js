@@ -1,7 +1,5 @@
 import React from 'react';
-import CreateCollection from './CreateCollection';
-import CollectionGallery from './CollectionGallery';
-import ScanNotes from './ScanNotes';
+
 import axios from 'axios';
 import { useState } from 'react';
 

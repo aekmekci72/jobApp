@@ -7,6 +7,7 @@ import App from './App';
 
 import { AuthProvider } from './AuthContext';
 import reportWebVitals from './reportWebVitals';
+import PrivateRoute from './PrivateRoute';
 
 function MainApp() {
   return (
