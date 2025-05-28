@@ -52,8 +52,7 @@ def parse_file():
             return jsonify({'error': 'Unsupported file type'}), 400
 
 
-        username = "user"
-
+        username = request.form.get('username')
         resume_data = {
             'username': username,
             'parsed_text': text,
@@ -117,8 +116,7 @@ def score_resume():
         print(result)
         evaluation = result.get('choices', [{}])[0].get('message', {}).get('content', 'No evaluation received.')
         
-        username = "user"
-
+        username = request.form.get('username')
         resume_data = {
             'username': username,
             'parsed_text': resume_text,

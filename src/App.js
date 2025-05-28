@@ -11,6 +11,7 @@ const App = () => {
   const [topSkills, setTopSkills] = useState('');
   const [rewrittenBullets, setRewrittenBullets] = useState('');
   const [editingFields, setEditingFields] = useState({ parsedText: false, coverLetter: false, rewrittenBullets: false });
+  const userName = localStorage.getItem('userName');
 
   useEffect(() => {
     const createFiller = async () => {
@@ -28,9 +29,11 @@ const App = () => {
 
   const handleGenerateCoverLetter = async () => {
     try {
+      console.log(userName);
       const response = await axios.post('http://localhost:5000/generate_cover_letter', {
         resume_text: parsedText,
-        job_description: jobDescription
+        job_description: jobDescription,
+        username: userName,
       });
       setCoverLetter(response.data.cover_letter);
     } catch (err) {
@@ -66,6 +69,7 @@ const App = () => {
   const handleUploadFile = async () => {
     const formData = new FormData();
     formData.append('file', selectedFile);
+    formData.append('username', userName);
 
     try {
       const response = await axios.post('http://localhost:5000/score_resume', formData, {
