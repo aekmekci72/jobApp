@@ -7,6 +7,7 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -50,7 +51,22 @@ def parse_file():
         else:
             return jsonify({'error': 'Unsupported file type'}), 400
 
-        return jsonify({'text': text})
+
+        username = "user"
+
+        resume_data = {
+            'username': username,
+            'parsed_text': text,
+            'timestamp': firestore.SERVER_TIMESTAMP
+        }
+
+        doc_ref = db.collection('resume').add(resume_data)
+        return jsonify({
+            'message': 'Resume parsed and saved successfully',
+            'document_id': doc_ref[1].id,
+            'text': text
+        })
+
 
     except Exception as e:
         return jsonify({'error': f'Failed to parse file: {str(e)}'}), 500
@@ -98,7 +114,18 @@ def score_resume():
         )
 
         result = llama_response.json()
+        print(result)
         evaluation = result.get('choices', [{}])[0].get('message', {}).get('content', 'No evaluation received.')
+        
+        username = "user"
+
+        resume_data = {
+            'username': username,
+            'parsed_text': resume_text,
+            'timestamp': firestore.SERVER_TIMESTAMP
+        }
+        doc_ref = db.collection('parsed_resumes').add(resume_data)
+
 
         return jsonify({
             'parsed_text': resume_text,
