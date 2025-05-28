@@ -40,15 +40,29 @@ const handleGenerateCoverLetter = async () => {
   }
 };
 
-const handleExtractSkills = async () => {
-  try {
-    const response = await axios.post('http://localhost:5000/extract_top_skills', {
-      resume_text: parsedText
-    });
-    setTopSkills(response.data.top_skills);
-  } catch (err) {
-    console.error('Skills error:', err);
-  }
+const handleDownload = () => {
+  const blob = new Blob([coverLetter], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'cover_letter.txt';
+  link.click();
+};
+
+const handleOpenInGoogleDocs = () => {
+  const blob = new Blob([coverLetter], { type: 'text/plain' });
+  const file = new File([blob], 'cover_letter.txt', { type: 'text/plain' });
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const encoded = encodeURIComponent(reader.result);
+    const newWindow = window.open(
+      `https://docs.google.com/document/u/0/create?usp=docs_home&hl=en`,
+      '_blank'
+    );
+  };
+  reader.readAsText(blob);
 };
 
 const handleRewriteBullets = async () => {
@@ -136,22 +150,16 @@ return (
     {coverLetter && (
       <>
         <h3>Generated Cover Letter</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1em', marginBottom: '0.5em' }}>
+          <button onClick={handleDownload} title="Download Cover Letter">📥</button>
+        </div>
         <pre style={{ whiteSpace: 'pre-wrap', backgroundColor: '#fff0f5', padding: '1em' }}>
           {coverLetter}
         </pre>
       </>
     )}
-
     {/* Rewrite Bullets Input */}
     <h3>Targeted Improvements</h3>
-    <textarea
-      rows={6}
-      cols={60}
-      placeholder="Enter bullet points (one per line)"
-      value={bulletInput}
-      onChange={(e) => setBulletInput(e.target.value)}
-      style={{ marginBottom: '1em' }}
-    />
     <button
       onClick={handleRewriteBullets}
       disabled={!parsedText}
