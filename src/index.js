@@ -6,6 +6,7 @@ import './index.css';
 import App from './App';
 import Login from './Login';
 import Signup from './Signup';
+import ResumeUpload from './ResumeUpload';
 
 
 import { AuthProvider } from './AuthContext';
@@ -21,6 +22,8 @@ function MainApp() {
           <Route path="/" element={<App />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/resumeupload" element={<ResumeUpload />} />
+
           {/* Private Routes */}
           <Route element={<PrivateRoute />}>
             

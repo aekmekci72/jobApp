@@ -3,9 +3,12 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './config/firebaseSetup';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 const Signup = () => {
     const navigate = useNavigate();
+    const { login } = useAuth(); 
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
@@ -16,22 +19,16 @@ const Signup = () => {
         setErrorMessage('');
 
         try {
-            // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log(user);
 
-            // Call the local API to create user
-            await axios.post('http://localhost:5000/create_user', {
-                email: email,
-                username: username
-            });
+            login(user.accessToken); 
+            localStorage.setItem('userName', email);
 
-            navigate("/login");
+            navigate("/resumeupload");
         } catch (error) {
             const errorCode = error.code;
             const errorMessage = error.message;
-            console.log(errorCode, errorMessage);
             if (errorCode === 'auth/weak-password') {
                 setErrorMessage('Password should be at least 6 characters.');
             } else {

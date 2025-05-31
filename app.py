@@ -8,6 +8,7 @@ import json
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 load_dotenv()
 
@@ -21,17 +22,6 @@ db = firestore.client()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY not found in .env")
-@app.route('/filler', methods=['POST'])
-def create_filler():
-    data = request.get_json()
-    if not data or 'filler_field' not in data:
-        return jsonify({'error': 'Missing filler_field'}), 400
-
-    doc_ref = db.collection('filler').add({
-        'filler_field': data['filler_field']
-    })
-
-    return jsonify({'message': 'Filler created', 'id': doc_ref[1].id}), 201
 
 @app.route('/parse', methods=['POST'])
 def parse_file():
@@ -69,6 +59,23 @@ def parse_file():
 
     except Exception as e:
         return jsonify({'error': f'Failed to parse file: {str(e)}'}), 500
+
+@app.route('/get_resume', methods=['GET'])
+def get_resume():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+
+    resumes = db.collection('parsed_resumes').where('username', '==', username).stream()
+
+    sorted_resumes = sorted(resumes, key=lambda x: x.to_dict().get('timestamp', datetime.min), reverse=True)
+
+    resume = sorted_resumes[0] if sorted_resumes else None
+    if resume:
+        return jsonify(resume.to_dict())
+    else:
+        return jsonify({'error': 'No resume found'}), 404
+
 
 @app.route('/score_resume', methods=['POST'])
 def score_resume():
