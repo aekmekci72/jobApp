@@ -30,3 +30,6 @@ serviceKey.json
 /build
 /dist
 /src/config/*
+
+/job_cache.json
+/company_industry_cache.json

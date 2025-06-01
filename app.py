@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
+import time
 
 load_dotenv()
 
@@ -22,6 +23,114 @@ db = firestore.client()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY not found in .env")
+
+CACHE_FILE = 'job_cache.json'
+CACHE_TTL = 3600
+COMPANY_INDUSTRY_CACHE_FILE = 'company_industry_cache.json'
+
+def load_cache(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            return json.load(file)
+    return {}
+
+def save_cache(file_path, cache_data):
+    with open(file_path, 'w') as file:
+        json.dump(cache_data, file)
+
+def fetch_jobs_without_filter():
+    job_api_url = "https://jobdataapi.com/api/jobs/"
+
+    response = requests.get(job_api_url)
+    
+    if response.status_code == 200:
+        jobs_data = response.json()
+        
+        cache = load_cache("job_cache.json")
+        cache["unfiltered_jobs"] = {
+            "data": jobs_data["results"],
+            "timestamp": time.time()
+        }
+        save_cache(CACHE_FILE, cache) 
+        return jobs_data
+    else:
+        print(f"Error: Unable to fetch jobs. Status code {response.status_code}")
+        return None
+
+fetch_jobs_without_filter()
+
+def filter_jobs_from_cache(industry_id=None, company_type_id=None):
+    cache = load_cache("job_cache.json")
+
+    if "unfiltered_jobs" not in cache:
+        print("No cached jobs available. Fetching unfiltered jobs...")
+        return fetch_jobs_without_filter()
+    
+    cached_data = cache["unfiltered_jobs"]
+    timestamp = cached_data["timestamp"]
+
+    if time.time() - timestamp > CACHE_TTL:
+        print("Cache expired, fetching new data...")
+        del cache["unfiltered_jobs"]
+        save_cache(CACHE_FILE, cache)  
+        return fetch_jobs_without_filter()
+    
+    jobs = cached_data["data"]
+    
+    if industry_id:
+        jobs = [job for job in jobs if job.get('industry', {}).get('id') == industry_id]
+    
+    if company_type_id:
+        jobs = [job for job in jobs if job.get('company', {}).get('type_id') == company_type_id]
+    
+    return jobs
+
+def fetch_jobs(industry_id=None, company_type_id=None):
+    jobs = filter_jobs_from_cache(industry_id, company_type_id)
+    
+    if not jobs: 
+        print("Fetching jobs...")
+        return fetch_jobs_without_filter()
+    
+    return jobs
+
+
+def fetch_company_and_industry_data():
+    with app.app_context():
+        try:
+            company_types_response = requests.get('https://jobdataapi.com/api/companytypes/')
+            industries_response = requests.get('https://jobdataapi.com/api/industries/')
+
+            if company_types_response.status_code != 200 or industries_response.status_code != 200:
+                return jsonify({'error': 'Failed to fetch data from external APIs'}), 500
+
+            company_types = company_types_response.json()
+            industries = industries_response.json()
+
+            cache = load_cache(COMPANY_INDUSTRY_CACHE_FILE)
+            cache["company_industry_data"] = {
+                "company_types": company_types,
+                "industries": industries,
+                "timestamp": time.time()
+            }
+            save_cache(COMPANY_INDUSTRY_CACHE_FILE, cache)
+
+            return {'company_types': company_types, 'industries': industries}
+        
+        except Exception as e:
+            return jsonify({'error': f'Error fetching data: {str(e)}'}), 500
+
+fetch_company_and_industry_data()
+
+def get_cached_company_and_industry_data():
+    cache = load_cache(COMPANY_INDUSTRY_CACHE_FILE)
+
+    if "company_industry_data" not in cache:
+        print("No cached company/industry data available. Fetching...")
+        return fetch_company_and_industry_data()
+    
+    cached_data = cache["company_industry_data"]
+    return cached_data
 
 @app.route('/parse', methods=['POST'])
 def parse_file():
@@ -176,6 +285,77 @@ Suggestions:
     
     return jsonify({'highlighted_feedback': output})
 
+@app.route('/submit_company_industry', methods=['POST'])
+def submit_company_industry():
+    data = request.get_json()
+    company_type = data.get('company_type', '')
+    industry = data.get('industry', '')
+    
+    if not company_type or not industry:
+        return jsonify({'error': 'Company type and industry are required'}), 400
+    return fetch_jobs_by_industry_and_type(int(industry), int(company_type))
+
+    filtered_jobs = fetch_jobs(industry, company_type)
+    job_list = []
+    for job in filtered_jobs[:5]: 
+        job_info = {
+            "job_id": job["id"],
+            "title": job["title"],
+            "company_name": job["company"]["name"],
+            "company_logo": job["company"]["logo"],
+            "company_website": job["company"]["website_url"],
+            "location": job["location"],
+            "description": job["description"],
+            "apply_url": job["application_url"]
+        }
+        job_list.append(job_info)
+    
+    return jsonify({"jobs": job_list})
+
+@app.route('/get_company_and_industry_data', methods=['GET'])
+def get_company_and_industry_data():
+    try:
+        data = get_cached_company_and_industry_data()
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({'error': f'Error fetching data: {str(e)}'}), 500
+
+def fetch_jobs_by_industry_and_type(industry_id, company_type_id):
+    print(str(industry_id) + " "+ str(company_type_id))
+    cache = load_cache("job_cache.json")
+    jobs = []
+
+    if "unfiltered_jobs" in cache:
+        jobs = cache["unfiltered_jobs"].get("data", [])
+    else:
+        return jsonify({"error": "No cached job data available."}), 503
+ 
+    # if industry_id:
+    #     jobs = [job for job in jobs if job.get('industry', {}).get('id') == industry_id]
+    # if company_type_id:
+    #     jobs = [job for job in jobs if job.get('types', {})[0].get('id') == company_type_id]
+
+    job_list = []
+    for job in jobs[:5]:
+        company = job.get("company", {})
+        print(company)
+        job_info = {
+            # "job_id": job.get("id"),
+            "title": job.get("title"),
+            "company_name": company.get("name"),
+            # "company_logo": company.get("logo"),
+            "company_website": company.get("website_url"),
+            "location": job.get("location"),
+            "description": job.get("description"),
+            "apply_url": job.get("application_url") 
+        }
+        job_list.append(job_info)
+    print(str(job_list).encode('ascii', 'ignore').decode('ascii'))
+
+    return jsonify({"jobs": job_list})
+
+    
 @app.route('/generate_cover_letter', methods=['POST'])
 def generate_cover_letter():
     data = request.get_json()
