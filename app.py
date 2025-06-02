@@ -295,23 +295,6 @@ def submit_company_industry():
         return jsonify({'error': 'Company type and industry are required'}), 400
     return fetch_jobs_by_industry_and_type(int(industry), int(company_type))
 
-    filtered_jobs = fetch_jobs(industry, company_type)
-    job_list = []
-    for job in filtered_jobs[:5]: 
-        job_info = {
-            "job_id": job["id"],
-            "title": job["title"],
-            "company_name": job["company"]["name"],
-            "company_logo": job["company"]["logo"],
-            "company_website": job["company"]["website_url"],
-            "location": job["location"],
-            "description": job["description"],
-            "apply_url": job["application_url"]
-        }
-        job_list.append(job_info)
-    
-    return jsonify({"jobs": job_list})
-
 @app.route('/get_company_and_industry_data', methods=['GET'])
 def get_company_and_industry_data():
     try:
@@ -321,7 +304,7 @@ def get_company_and_industry_data():
     except Exception as e:
         return jsonify({'error': f'Error fetching data: {str(e)}'}), 500
 
-def fetch_jobs_by_industry_and_type(industry_id, company_type_id):
+def fetch_jobs_by_industry_and_type(industry_id, company_type_id, keywords=None):
     print(str(industry_id) + " "+ str(company_type_id))
     cache = load_cache("job_cache.json")
     jobs = []
@@ -331,6 +314,15 @@ def fetch_jobs_by_industry_and_type(industry_id, company_type_id):
     else:
         return jsonify({"error": "No cached job data available."}), 503
  
+    keywords = ["software engineer"]
+
+    if keywords:
+        lower_keywords = [kw.lower() for kw in keywords]
+        jobs=[
+            job for job in jobs
+            if any (kw in job.get("title","").lower() for kw in lower_keywords)
+        ]
+
     # if industry_id:
     #     jobs = [job for job in jobs if job.get('industry', {}).get('id') == industry_id]
     # if company_type_id:
