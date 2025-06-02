@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { NavLink, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './config/firebaseSetup';
@@ -34,15 +34,17 @@ const Login = () => {
     };
 
     return (
-        <div>
-            <div>
-                <h2>Log in to your account</h2>
-            </div>
-            <form onSubmit={onSubmit}>
-                <input type="hidden" name="remember" defaultValue="true" />
+        <div className="min-h-screen bg-[#e6f1f3] flex items-center justify-center px-4">
+            <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8 space-y-6">
                 <div>
+                    <h2 className="text-center text-2xl font-bold text-[#3a5d61]">
+                        Log in to your account
+                    </h2>
+                </div>
+                <form onSubmit={onSubmit} className="space-y-5">
+                    <input type="hidden" name="remember" defaultValue="true" />
                     <div>
-                        <label htmlFor="email-address">
+                        <label htmlFor="email-address" className="block text-sm font-medium text-[#3a5d61]">
                             Email address
                         </label>
                         <input
@@ -51,13 +53,14 @@ const Login = () => {
                             type="email"
                             autoComplete="email"
                             required
-                            placeholder="Email address"
+                            placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            className="mt-1 w-full px-4 py-2 border border-[#88b1b8] rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#88b1b8]"
                         />
                     </div>
                     <div>
-                        <label htmlFor="password">
+                        <label htmlFor="password" className="block text-sm font-medium text-[#3a5d61]">
                             Password
                         </label>
                         <input
@@ -66,32 +69,34 @@ const Login = () => {
                             type="password"
                             autoComplete="current-password"
                             required
-                            placeholder="Password"
+                            placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            className="mt-1 w-full px-4 py-2 border border-[#88b1b8] rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#88b1b8]"
                         />
                     </div>
-                </div>
 
-                {errorMessage && (
+                    {errorMessage && (
+                        <div className="text-sm text-red-600 font-medium">
+                            {errorMessage}
+                        </div>
+                    )}
+
                     <div>
-                        {errorMessage}
+                        <button
+                            type="submit"
+                            className="w-full py-2 px-4 bg-[#88b1b8] hover:bg-[#769aa0] text-white font-semibold rounded-lg shadow-md transition duration-200"
+                        >
+                            Log in
+                        </button>
                     </div>
-                )}
-
-                <div>
-                    <button type="submit">
-                        Log in
-                    </button>
-                </div>
-            </form>
-            <div>
-                <p>
+                </form>
+                <div className="text-center text-sm text-[#3a5d61]">
                     Don't have an account?{' '}
-                    <NavLink to="/signup">
+                    <NavLink to="/signup" className="text-[#88b1b8] hover:underline font-medium">
                         Sign up
                     </NavLink>
-                </p>
+                </div>
             </div>
         </div>
     );
