@@ -286,6 +286,52 @@ Suggestions:
     
     return jsonify({'highlighted_feedback': output})
 
+
+@app.route('/resume_feedback', methods=['POST'])
+def resume_feedback():
+    data = request.get_json()
+    resume_text = data.get('resume_text', '')
+    job_description = data.get('job_description', '')
+
+    if not resume_text or not job_description:
+        return jsonify({'error': 'No resume text or job description provided'}), 400
+
+    
+    prompt = f"""
+Read the following resume text and identify any areas that could be improved. 
+Highlight sections that are vague, use weak or passive verbs, lack quantifiable impact, or could be rewritten to better showcase skills and accomplishments. 
+Do not rewrite the full resume—just list specific suggestions for improvements or mark weak areas with brief explanations.
+Tailor your feedback to the strength of the resume for the job description provided that this resume will be used to apply to.
+
+Resume:
+{resume_text}
+
+Job Description:
+{job_description}
+
+Suggestions:
+"""
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        data=json.dumps({
+            "model": "meta-llama/llama-4-scout:free",
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+        })
+    )
+
+    result = response.json()
+    output = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+    
+    return jsonify({'feedback': output})
+
+
+
+
 @app.route('/suggest_jobs', methods=['POST'])
 def suggest_jobs():
     data = request.get_json()
