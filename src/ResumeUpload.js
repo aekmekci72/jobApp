@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Navbar from './Navbar';
 
 const ResumeUpload = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,41 +24,41 @@ const ResumeUpload = () => {
     }
   }, [userName]);
 
-const loadExistingResume = async () => {
-  try {
-    const response = await axios.get('http://localhost:5000/get_resume', {
-      params: { username: userName },
-    });
-    if (response.data.parsed_text) {
-      setParsedText(response.data.parsed_text);
-      getResumeScore(response.data.parsed_text);
+  const loadExistingResume = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/get_resume', {
+        params: { username: userName },
+      });
+      if (response.data.parsed_text) {
+        setParsedText(response.data.parsed_text);
+        getResumeScore(response.data.parsed_text);
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        console.error('Error fetching resume:', error);
+      }
     }
-  } catch (error) {
-    if (error.response?.status !== 404) {
-      console.error('Error fetching resume:', error);
+  };
+
+  const getResumeScore = async (resumeText) => {
+    try {
+      const fileBlob = new Blob([resumeText], { type: 'text/plain' });
+
+      const formData = new FormData();
+      formData.append('file', fileBlob, 'resume.txt');
+      formData.append('username', userName);
+
+      const response = await axios.post('http://localhost:5000/score_resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setResumeScore(response.data.resume_score);
+    } catch (error) {
+      console.error('Error scoring resume text:', error);
     }
-  }
-};
-
-const getResumeScore = async (resumeText) => {
-  try {
-    const fileBlob = new Blob([resumeText], { type: 'text/plain' });
-
-    const formData = new FormData();
-    formData.append('file', fileBlob, 'resume.txt');
-    formData.append('username', userName);
-
-    const response = await axios.post('http://localhost:5000/score_resume', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    setResumeScore(response.data.resume_score);
-  } catch (error) {
-    console.error('Error scoring resume text:', error);
-  }
-};
+  };
 
 
   const handleGenerateCoverLetter = async () => {
@@ -122,167 +123,170 @@ const getResumeScore = async (resumeText) => {
   };
 
   return (
-    <div className="max-w-6xl w-full mx-auto my-8 p-8 bg-[#fafafa] rounded-lg shadow-md font-sans">
+    <div>
+      <Navbar />
+      <div className="max-w-6xl w-full mx-auto my-8 p-8 bg-[#fafafa] rounded-lg shadow-md font-sans">
 
-      {/* Upload Section */}
-      <div className="mb-8">
-        <label className="block font-semibold mb-2 text-[#88b1b8]">Upload Resume</label>
-        <input
-          type="file"
-          accept=".pdf,.txt"
-          onChange={handleFileChange}
-          className="block mb-3"
-        />
-        <button
-          onClick={handleUploadFile}
-          disabled={!selectedFile}
-          className={`ml-2 px-4 py-2 rounded-md font-semibold transition-colors duration-200
+        {/* Upload Section */}
+        <div className="mb-8">
+          <label className="block font-semibold mb-2 text-[#88b1b8]">Upload Resume</label>
+          <input
+            type="file"
+            accept=".pdf,.txt"
+            onChange={handleFileChange}
+            className="block mb-3"
+          />
+          <button
+            onClick={handleUploadFile}
+            disabled={!selectedFile}
+            className={`ml-2 px-4 py-2 rounded-md font-semibold transition-colors duration-200
             ${selectedFile ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
-        >
-          Upload & Score
-        </button>
-      </div>
-
-      {/* Parsed Text */}
-      {parsedText && (
-        <div className="mb-8">
-          <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
-            Parsed Text
-            <button
-              onClick={() => toggleEdit('parsedText')}
-              className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
-              aria-label="Edit Parsed Text"
-              title="Edit Parsed Text"
-            >
-              🖉
-            </button>
-          </label>
-          {editingFields.parsedText ? (
-            <textarea
-              value={parsedText}
-              onChange={(e) => setParsedText(e.target.value)}
-              className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono whitespace-pre-wrap"
-            />
-          ) : (
-            <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono whitespace-pre-wrap">
-              {parsedText}
-            </pre>
-          )}
+          >
+            Upload & Score
+          </button>
         </div>
-      )}
 
-      {/* Resume Score */}
-      {resumeScore && (
-        <div className="mb-8">
-          <label className="block font-semibold mb-2 text-[#88b1b8]">Resume Score</label>
-          <pre className="w-full p-4 rounded-md border border-green-400 bg-green-100 font-mono whitespace-pre-wrap">
-            {resumeScore}
-          </pre>
-        </div>
-      )}
-
-      {/* Filler ID */}
-      {fillerId && (
-        <p className="italic mb-8">Filler created with ID: {fillerId}</p>
-      )}
-
-      {/* Job Description */}
-      <div className="mb-8">
-        <label className="block font-semibold mb-2 text-[#88b1b8]">Job Description</label>
-        <textarea
-          rows={5}
-          placeholder="Paste job description here"
-          value={jobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
-          className="w-full min-h-[120px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono"
-        />
-        <button
-          onClick={handleGenerateCoverLetter}
-          disabled={!parsedText}
-          className={`mt-4 px-4 py-2 rounded-md font-semibold transition-colors duration-200
-            ${parsedText ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
-        >
-          Generate Cover Letter
-        </button>
-      </div>
-
-      {/* Cover Letter */}
-      {coverLetter && (
-        <div className="mb-8">
-          <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
-            Generated Cover Letter
-            <button
-              onClick={() => toggleEdit('coverLetter')}
-              className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
-              aria-label="Edit Cover Letter"
-              title="Edit Cover Letter"
-            >
-              🖉
-            </button>
-          </label>
-          <div className="flex gap-4 mb-2">
-            <button
-              onClick={handleDownload}
-              className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
-            >
-              Download
-            </button>
+        {/* Parsed Text */}
+        {parsedText && (
+          <div className="mb-8">
+            <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
+              Parsed Text
+              <button
+                onClick={() => toggleEdit('parsedText')}
+                className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
+                aria-label="Edit Parsed Text"
+                title="Edit Parsed Text"
+              >
+                🖉
+              </button>
+            </label>
+            {editingFields.parsedText ? (
+              <textarea
+                value={parsedText}
+                onChange={(e) => setParsedText(e.target.value)}
+                className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono whitespace-pre-wrap"
+              />
+            ) : (
+              <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono whitespace-pre-wrap">
+                {parsedText}
+              </pre>
+            )}
           </div>
-          {editingFields.coverLetter ? (
-            <textarea
-              value={coverLetter}
-              onChange={(e) => setCoverLetter(e.target.value)}
-              className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#fff0f5] font-mono whitespace-pre-wrap"
-            />
-          ) : (
-            <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#fff0f5] font-mono whitespace-pre-wrap">
-              {coverLetter}
+        )}
+
+        {/* Resume Score */}
+        {resumeScore && (
+          <div className="mb-8">
+            <label className="block font-semibold mb-2 text-[#88b1b8]">Resume Score</label>
+            <pre className="w-full p-4 rounded-md border border-green-400 bg-green-100 font-mono whitespace-pre-wrap">
+              {resumeScore}
             </pre>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Targeted Resume Improvements */}
-      <div className="mb-8">
-        <label className="block font-semibold mb-2 text-[#88b1b8]">Targeted Resume Improvements</label>
-        <button
-          onClick={handleRewriteBullets}
-          disabled={!parsedText}
-          className={`px-4 py-2 rounded-md font-semibold transition-colors duration-200
-            ${parsedText ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
-        >
-          Get Feedback
-        </button>
-      </div>
+        {/* Filler ID */}
+        {fillerId && (
+          <p className="italic mb-8">Filler created with ID: {fillerId}</p>
+        )}
 
-      {/* Rewritten Bullets */}
-      {rewrittenBullets && (
+        {/* Job Description */}
         <div className="mb-8">
-          <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
-            Rewritten Bullet Points
-            <button
-              onClick={() => toggleEdit('rewrittenBullets')}
-              className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
-              aria-label="Edit Rewritten Bullets"
-              title="Edit Rewritten Bullets"
-            >
-              🖉
-            </button>
-          </label>
-          {editingFields.rewrittenBullets ? (
-            <textarea
-              value={rewrittenBullets}
-              onChange={(e) => setRewrittenBullets(e.target.value)}
-              className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap"
-            />
-          ) : (
-            <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap">
-              {rewrittenBullets}
-            </pre>
-          )}
+          <label className="block font-semibold mb-2 text-[#88b1b8]">Job Description</label>
+          <textarea
+            rows={5}
+            placeholder="Paste job description here"
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            className="w-full min-h-[120px] p-4 rounded-md border border-gray-300 bg-gray-100 font-mono"
+          />
+          <button
+            onClick={handleGenerateCoverLetter}
+            disabled={!parsedText}
+            className={`mt-4 px-4 py-2 rounded-md font-semibold transition-colors duration-200
+            ${parsedText ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+          >
+            Generate Cover Letter
+          </button>
         </div>
-      )}
 
+        {/* Cover Letter */}
+        {coverLetter && (
+          <div className="mb-8">
+            <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
+              Generated Cover Letter
+              <button
+                onClick={() => toggleEdit('coverLetter')}
+                className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
+                aria-label="Edit Cover Letter"
+                title="Edit Cover Letter"
+              >
+                🖉
+              </button>
+            </label>
+            <div className="flex gap-4 mb-2">
+              <button
+                onClick={handleDownload}
+                className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
+              >
+                Download
+              </button>
+            </div>
+            {editingFields.coverLetter ? (
+              <textarea
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+                className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#fff0f5] font-mono whitespace-pre-wrap"
+              />
+            ) : (
+              <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#fff0f5] font-mono whitespace-pre-wrap">
+                {coverLetter}
+              </pre>
+            )}
+          </div>
+        )}
+
+        {/* Targeted Resume Improvements */}
+        <div className="mb-8">
+          <label className="block font-semibold mb-2 text-[#88b1b8]">Targeted Resume Improvements</label>
+          <button
+            onClick={handleRewriteBullets}
+            disabled={!parsedText}
+            className={`px-4 py-2 rounded-md font-semibold transition-colors duration-200
+            ${parsedText ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+          >
+            Get Feedback
+          </button>
+        </div>
+
+        {/* Rewritten Bullets */}
+        {rewrittenBullets && (
+          <div className="mb-8">
+            <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
+              Rewritten Bullet Points
+              <button
+                onClick={() => toggleEdit('rewrittenBullets')}
+                className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
+                aria-label="Edit Rewritten Bullets"
+                title="Edit Rewritten Bullets"
+              >
+                🖉
+              </button>
+            </label>
+            {editingFields.rewrittenBullets ? (
+              <textarea
+                value={rewrittenBullets}
+                onChange={(e) => setRewrittenBullets(e.target.value)}
+                className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap"
+              />
+            ) : (
+              <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap">
+                {rewrittenBullets}
+              </pre>
+            )}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };

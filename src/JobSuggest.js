@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { select } from '@nextui-org/react';
+import Navbar from './Navbar';
 
 const JobSuggestionsForm = () => {
   const [resume, setResume] = useState('');
   const [jobs, setJobs] = useState([]);
   const [userName, setUserName] = useState('');
-  const [selectedJob, setSelectedJob] = useState(null); 
-  const [coverLetter, setCoverLetter] = useState(''); 
-  const [resumeFeedback, setResumeFeedback] = useState(''); 
-  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);  
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [resumeFeedback, setResumeFeedback] = useState('');
+  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ const JobSuggestionsForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!resume) {
       alert('Please upload or provide a resume.');
       return;
@@ -63,7 +64,7 @@ const JobSuggestionsForm = () => {
         username: userName,
       });
       setCoverLetter(response.data.cover_letter);
-      setIsCoverLetterModalOpen(true); 
+      setIsCoverLetterModalOpen(true);
     } catch (error) {
       console.error('Error generating cover letter:', error);
     }
@@ -92,101 +93,105 @@ const JobSuggestionsForm = () => {
   };
 
   const handleCloseModal = () => {
-    setIsCoverLetterModalOpen(false); 
-    setIsFeedbackModalOpen(false); 
+    setIsCoverLetterModalOpen(false);
+    setIsFeedbackModalOpen(false);
   };
 
   return (
     <div>
-      <h2>Job Suggestions Based on Your Resume</h2>
-      
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="resume">Your Resume</label>
-          <textarea 
-            id="resume"
-            value={resume}
-            onChange={handleResumeChange}
-            rows="10"
-            placeholder="Paste your resume text here..."
-            style={{ width: '100%', marginBottom: '10px' }}
-          />
-        </div>
-        
-        <button type="submit">Get Job Suggestions</button>
-      </form>
+      <Navbar />
 
-      {jobs.length > 0 && (
-        <div>
-          <h3>Job Results</h3>
-          <ul>
-            {jobs.map((job, idx) => (
-              <li key={idx} style={{ marginBottom: '1em', border: '1px solid #eee', padding: '1em' }}>
-                <h4>{job.title}</h4>
-                <p><strong>Company:</strong> {job.company_name}</p>
-                <p><strong>Location:</strong> {job.location}</p>
-                <p><strong>Description:</strong> {job.description}</p>
-                <p>
-                  <a href={job.apply_url} target="_blank" rel="noopener noreferrer">Apply Here</a>
-                  {job.company_website && (
-                    <>
-                      {' | '}
-                      <a href={job.company_website} target="_blank" rel="noopener noreferrer">Company Website</a>
-                    </>
-                  )}
-                </p>
-                <button 
-                  onClick={() => handleGenerateCoverLetter(job.description)}
-                  className="mt-4 px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
-                >
-                  Write Cover Letter
-                </button>
-                <button 
-                  onClick={() => handleGenerateResumeFeedback(job.description)}
-                  className="mt-4 ml-4 px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
-                >
-                  Resume Feedback
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <div>
+        <h2>Job Suggestions Based on Your Resume</h2>
 
-      {isCoverLetterModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="close-btn" onClick={handleCloseModal}>X</button>
-            <h3>Generated Cover Letter</h3>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="resume">Your Resume</label>
             <textarea
-              value={coverLetter}
-              onChange={(e) => setCoverLetter(e.target.value)}
+              id="resume"
+              value={resume}
+              onChange={handleResumeChange}
               rows="10"
+              placeholder="Paste your resume text here..."
               style={{ width: '100%', marginBottom: '10px' }}
             />
-            <div>
-              <button onClick={handleDownloadCoverLetter}>Download Cover Letter</button>
+          </div>
+
+          <button type="submit">Get Job Suggestions</button>
+        </form>
+
+        {jobs.length > 0 && (
+          <div>
+            <h3>Job Results</h3>
+            <ul>
+              {jobs.map((job, idx) => (
+                <li key={idx} style={{ marginBottom: '1em', border: '1px solid #eee', padding: '1em' }}>
+                  <h4>{job.title}</h4>
+                  <p><strong>Company:</strong> {job.company_name}</p>
+                  <p><strong>Location:</strong> {job.location}</p>
+                  <p><strong>Description:</strong> {job.description}</p>
+                  <p>
+                    <a href={job.apply_url} target="_blank" rel="noopener noreferrer">Apply Here</a>
+                    {job.company_website && (
+                      <>
+                        {' | '}
+                        <a href={job.company_website} target="_blank" rel="noopener noreferrer">Company Website</a>
+                      </>
+                    )}
+                  </p>
+                  <button
+                    onClick={() => handleGenerateCoverLetter(job.description)}
+                    className="mt-4 px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
+                  >
+                    Write Cover Letter
+                  </button>
+                  <button
+                    onClick={() => handleGenerateResumeFeedback(job.description)}
+                    className="mt-4 ml-4 px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold transition-colors duration-200"
+                  >
+                    Resume Feedback
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {isCoverLetterModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="close-btn" onClick={handleCloseModal}>X</button>
+              <h3>Generated Cover Letter</h3>
+              <textarea
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+                rows="10"
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+              <div>
+                <button onClick={handleDownloadCoverLetter}>Download Cover Letter</button>
+                <button onClick={handleCloseModal}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isFeedbackModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="close-btn" onClick={handleCloseModal}>X</button>
+              <h3>Resume Feedback</h3>
+              <textarea
+                value={resumeFeedback}
+                readOnly
+                rows="10"
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
               <button onClick={handleCloseModal}>Close</button>
             </div>
           </div>
-        </div>
-      )}
-
-      {isFeedbackModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="close-btn" onClick={handleCloseModal}>X</button>
-            <h3>Resume Feedback</h3>
-            <textarea
-              value={resumeFeedback}
-              readOnly
-              rows="10"
-              style={{ width: '100%', marginBottom: '10px' }}
-            />
-            <button onClick={handleCloseModal}>Close</button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
