@@ -8,6 +8,7 @@ import Login from './Login';
 import Signup from './Signup';
 import ResumeUpload from './ResumeUpload';
 import JobSearch from './JobSearch'
+import JobSuggest from './JobSuggest'
 
 import { AuthProvider } from './AuthContext';
 import reportWebVitals from './reportWebVitals';
@@ -24,6 +25,7 @@ function MainApp() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/resumeupload" element={<ResumeUpload />} />
           <Route path="/jobsearch" element={<JobSearch />} />
+          <Route path="/jobsuggest" element={<JobSuggest />} />
 
           {/* Private Routes */}
           <Route element={<PrivateRoute />}>

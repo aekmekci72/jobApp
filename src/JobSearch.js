@@ -7,8 +7,14 @@ const CompanyAndIndustryForm = () => {
   const [selectedCompanyType, setSelectedCompanyType] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [jobs, setJobs] = useState([]);
+  const [resume, setResume] = useState('');
+  
+  const userName = localStorage.getItem('userName');
 
   useEffect(() => {
+    if(userName){
+      loadExistingResume();
+    }
     axios.get('http://localhost:5000/get_company_and_industry_data')
       .then((response) => {
         setCompanyTypes(response.data.company_types);
@@ -17,14 +23,29 @@ const CompanyAndIndustryForm = () => {
       .catch((error) => {
         console.error("Error fetching company types and industries:", error);
       });
-  }, []);
+  }, [userName]);
+
+  const loadExistingResume = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/get_resume', {
+        params: { username: userName },
+      });
+      if (response.data.parsed_text) {
+        setResume(response.data.parsed_text);
+      }
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        console.error('Error fetching resume:', error);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const data = {
       company_type: selectedCompanyType,
-      industry: selectedIndustry,
+      industry: selectedIndustry
     };
 
     try {

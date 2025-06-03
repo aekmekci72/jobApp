@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter
 import time
+import re 
 
 load_dotenv()
 
@@ -285,6 +286,104 @@ Suggestions:
     
     return jsonify({'highlighted_feedback': output})
 
+@app.route('/suggest_jobs', methods=['POST'])
+def suggest_jobs():
+    data = request.get_json()
+    resume = data.get('resume', '')
+    
+    if not resume:
+        return jsonify({'error': 'Resume is required'}), 400
+     
+    keywords = extract_keywords_from_resume(resume)
+    print(keywords)
+    if not keywords:
+        return jsonify({'error': 'Failed to extract keywords from the resume'}), 500
+
+    return fetch_jobs_by_keyword(keywords)
+
+
+def extract_keywords_from_resume(resume_text):
+    prompt = f"""From the following resume text, generate a list of relevant search terms (keywords) that could be used to search for jobs related to the skills and experiences described in the resume. 
+    Please follow the format exactly. These should be keywords and skills that are typically associated with job roles based on the resume.
+
+Resume Text: 
+{resume_text}
+
+Format:
+Search Terms:
+- search term 1
+- search term 2
+- search term 3
+- ...
+
+Please provide only the search terms in the specified format. Do not include job titles or any other information.
+"""
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        data=json.dumps({
+            "model": "meta-llama/llama-4-scout:free",
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+        })
+    )
+
+    result = response.json()
+    content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+
+    search_terms = []
+
+    match = re.findall(r"- (.*)", content)
+    for term in match:
+        search_terms.append(term.strip())
+
+    return search_terms
+
+
+def fetch_jobs_by_keyword(keywords):
+    cache = load_cache("job_cache.json")
+    jobs = []
+
+    if "unfiltered_jobs" in cache:
+        jobs = cache["unfiltered_jobs"].get("data", [])
+    else:
+        return jsonify({"error": "No cached job data available."}), 503
+ 
+    lower_keywords = [kw.lower() for kw in keywords]
+    job_relevance_scores = []
+
+    for job in jobs:
+        match_count = 0
+        
+        job_title = job.get("title", "").lower()
+        job_description = job.get("description", "").lower()
+        
+        match_count += sum(1 for kw in lower_keywords if kw in job_title)
+        match_count += sum(1 for kw in lower_keywords if kw in job_description)
+        
+        if match_count > 0:
+            job_relevance_scores.append((job, match_count))
+
+    sorted_jobs = sorted(job_relevance_scores, key=lambda x: x[1], reverse=True)
+
+    job_list = []
+    for job, _ in sorted_jobs[:5]:
+        company = job.get("company", {})
+        job_info = {
+            "title": job.get("title"),
+            "company_name": company.get("name"),
+            "company_website": company.get("website_url"),
+            "location": job.get("location"),
+            "description": job.get("description"),
+            "apply_url": job.get("application_url")
+        }
+        job_list.append(job_info)
+
+    return jsonify({"jobs": job_list})
+
 @app.route('/submit_company_industry', methods=['POST'])
 def submit_company_industry():
     data = request.get_json()
@@ -293,7 +392,8 @@ def submit_company_industry():
     
     if not company_type or not industry:
         return jsonify({'error': 'Company type and industry are required'}), 400
-    return fetch_jobs_by_industry_and_type(int(industry), int(company_type))
+    return fetch_jobs_by_keyword(int(industry), int(company_type))
+
 
 @app.route('/get_company_and_industry_data', methods=['GET'])
 def get_company_and_industry_data():
@@ -314,13 +414,14 @@ def fetch_jobs_by_industry_and_type(industry_id, company_type_id, keywords=None)
     else:
         return jsonify({"error": "No cached job data available."}), 503
  
-    keywords = ["software engineer"]
+    keywords = ["software engineer", "tech"]
 
     if keywords:
         lower_keywords = [kw.lower() for kw in keywords]
-        jobs=[
+        jobs = [
             job for job in jobs
-            if any (kw in job.get("title","").lower() for kw in lower_keywords)
+            if any(kw in job.get("title", "").lower() for kw in lower_keywords) or
+               any(kw in job.get("description", "").lower() for kw in lower_keywords)
         ]
 
     # if industry_id:
