@@ -433,12 +433,12 @@ def fetch_jobs_by_keyword(keywords):
 @app.route('/submit_company_industry', methods=['POST'])
 def submit_company_industry():
     data = request.get_json()
-    company_type = data.get('company_type', '')
-    industry = data.get('industry', '')
+
+    keywords = data.get('keywords', [])
     
-    if not company_type or not industry:
-        return jsonify({'error': 'Company type and industry are required'}), 400
-    return fetch_jobs_by_keyword(int(industry), int(company_type))
+    if not keywords:
+        return jsonify({'error': 'Keywords are required'}), 400
+    return fetch_jobs_by_keyword(keywords)
 
 
 @app.route('/get_company_and_industry_data', methods=['GET'])

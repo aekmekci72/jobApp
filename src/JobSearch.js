@@ -9,6 +9,8 @@ const CompanyAndIndustryForm = () => {
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [jobs, setJobs] = useState([]);
   const [resume, setResume] = useState('');
+  const [keywords, setKeywords] = useState([]);
+  const [keywordInput, setKeywordInput] = useState('');
 
   const userName = localStorage.getItem('userName');
 
@@ -41,13 +43,22 @@ const CompanyAndIndustryForm = () => {
     }
   };
 
+  const handleAddKeyword = () => {
+    if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
+      setKeywords([...keywords, keywordInput.trim()]);
+      setKeywordInput('');
+    }
+  };
+
+  const handleRemoveKeyword = (keywordToRemove) => {
+    setKeywords(keywords.filter((keyword) => keyword !== keywordToRemove));
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = {
-      company_type: selectedCompanyType,
-      industry: selectedIndustry
-    };
+    const data = { keywords };
 
     try {
       const response = await axios.post('http://localhost:5000/submit_company_industry', data);
@@ -62,39 +73,33 @@ const CompanyAndIndustryForm = () => {
       <Navbar />
 
       <div>
-        <h2>Company Type and Industry</h2>
+        <h2>Job Search by Keywords</h2>
 
         <form onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="companyType">Select Company Type</label>
-            <select
-              id="companyType"
-              value={selectedCompanyType}
-              onChange={(e) => setSelectedCompanyType(e.target.value)}
-            >
-              <option value="">Select Company Type</option>
-              <option value="all">All</option>
-              {companyTypes.map((type) => (
-                <option key={type.id} value={type.id}>{type.name}</option>
-              ))}
-            </select>
+            <label htmlFor="keywordInput">Add Keyword</label>
+            <input
+              type="text"
+              id="keywordInput"
+              value={keywordInput}
+              onChange={(e) => setKeywordInput(e.target.value)}
+            />
+            <button type="button" onClick={handleAddKeyword}>Add</button>
           </div>
-
           <div>
-            <label htmlFor="industry">Select Industry</label>
-            <select
-              id="industry"
-              value={selectedIndustry}
-              onChange={(e) => setSelectedIndustry(e.target.value)}
-            >
-              <option value="">Select Industry</option>
-              <option value="all">All</option>
-              {industries.map((industry) => (
-                <option key={industry.id} value={industry.id}>{industry.name}</option>
-              ))}
-            </select>
+            <h3>Keywords</h3>
+            {keywords.length > 0 && (
+              <ul>
+                {keywords.map((keyword, idx) => (
+                  <li key={idx} style={{ display: 'flex', alignItems: 'center' }}>
+                    {keyword}
+                    <button type="button" onClick={() => handleRemoveKeyword(keyword)}>✖</button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
+          
           <button type="submit">
             Submit
           </button>
