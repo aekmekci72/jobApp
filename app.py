@@ -339,7 +339,7 @@ def suggest_jobs():
     
     if not resume:
         return jsonify({'error': 'Resume is required'}), 400
-     
+    
     keywords = extract_keywords_from_resume(resume)
     print(keywords)
     if not keywords:
@@ -389,6 +389,46 @@ Please provide only the search terms in the specified format. Do not include job
     return search_terms
 
 
+def extract_keywords_from_keywords(keywrds):
+    prompt = f"""From the following keywords that a user is searching, generate a list of additional relevant search terms (keywords) that could be used to search for jobs related to the keywords submitted for more specific and targeted results. 
+    Please follow the format exactly. Ensure that some of your keywords are targeted, and some are more broad or single words.
+
+Submitted keywords: 
+{keywrds}
+
+Format:
+Search Terms:
+- search term 1
+- search term 2
+- search term 3
+- ...
+
+Please provide only the search terms in the specified format. Do not include job titles or any other information.
+"""
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        data=json.dumps({
+            "model": "meta-llama/llama-4-scout:free",
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+        })
+    )
+
+    result = response.json()
+    content = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+
+    search_terms = []
+
+    match = re.findall(r"- (.*)", content)
+    for term in match:
+        search_terms.append(term.strip())
+
+    return search_terms
+
 def fetch_jobs_by_keyword(keywords):
     cache = load_cache("job_cache.json")
     jobs = []
@@ -428,13 +468,15 @@ def fetch_jobs_by_keyword(keywords):
         }
         job_list.append(job_info)
 
-    return jsonify({"jobs": job_list})
+    return jsonify({"jobs": job_list, "keywords":keywords})
 
 @app.route('/submit_company_industry', methods=['POST'])
 def submit_company_industry():
     data = request.get_json()
 
     keywords = data.get('keywords', [])
+    kws = extract_keywords_from_keywords(keywords)
+    keywords = keywords+kws
     
     if not keywords:
         return jsonify({'error': 'Keywords are required'}), 400
