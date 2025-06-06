@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import jobappLogo from './assets/logo.png';
+
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -17,7 +19,9 @@ const Navbar = () => {
   return (
     <nav className="bg-[#fafafa] shadow-md px-6 py-3 flex items-center justify-between font-sans max-w-6xl mx-auto rounded-md my-4">
       <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/home')}>
-        <div className="text-[#88b1b8] font-bold text-xl select-none">JobApp Logo</div>
+      <div className="select-none">
+      <img src={jobappLogo} alt="JobApp Logo" className="h-16 w-16" />
+      </div>
       </div>
 
       <div className="flex space-x-4">
