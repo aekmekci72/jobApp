@@ -456,7 +456,7 @@ def fetch_jobs_by_keyword(keywords):
     sorted_jobs = sorted(job_relevance_scores, key=lambda x: x[1], reverse=True)
 
     job_list = []
-    for job, _ in sorted_jobs[:5]:
+    for job, _ in sorted_jobs[:6]:
         company = job.get("company", {})
         job_info = {
             "title": job.get("title"),
