@@ -7,7 +7,7 @@ const Landing = () => {
     return (
         <div className="min-h-screen bg-[#e6f1f3] flex flex-col items-center justify-center px-6 space-y-10">
             <h2 className="text-4xl font-extrabold text-[#3a5d61] font-poppins">
-                Welcome to JobApp
+                Welcome to JobFit Pro
             </h2>
             <div className="flex gap-6">
                 <button
