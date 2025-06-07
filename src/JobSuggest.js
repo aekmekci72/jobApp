@@ -116,10 +116,10 @@ const swipeRight = () => {
     <div className="min-h-screen bg-white text-gray-800">
       <Navbar />
       <div className="max-w-5xl mx-auto my-10 p-8 bg-[#fcfcfc] shadow-md rounded-lg font-sans">
-        <h2 className="text-2xl font-bold mb-4">Job Suggestions Based on Your Resume</h2>
+        <h2 className="text-2xl font-bold mb-6 text-[#88b1b8]">Job Suggestions Based on Your Resume</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="resume" className="block font-semibold mb-1">Your Resume</label>
+            <label htmlFor="resume" className="block font-bold mb-6 text-[#88b1b8]">Your Resume</label>
             <textarea
               id="resume"
               value={resume}
