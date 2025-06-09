@@ -349,7 +349,7 @@ def suggest_jobs():
 
 
 def extract_keywords_from_resume(resume_text):
-    prompt = f"""From the following resume text, generate a list of relevant search terms (keywords) that could be used to search for jobs related to the skills and experiences described in the resume. 
+    prompt = f"""From the following resume text, generate a list of relevant search terms (keywords) that could be used to search for jobs related to the skills and experiences described in the resume. Make sure there are numerous keywords and they range from very specific to more general, so that when used, the best job suggestions for the user specifically will be recommended
     Please follow the format exactly. These should be keywords and skills that are typically associated with job roles based on the resume.
 
 Resume Text: 
