@@ -261,30 +261,15 @@ const ResumeUpload = () => {
         {/* Rewritten Bullets */}
         {rewrittenBullets && (
           <div className="mb-8">
-            <label className="block font-semibold mb-2 text-[#88b1b8] flex items-center justify-between">
+            <label className="block font-semibold mb-2 text-[#88b1b8]">
               Rewritten Bullet Points
-              <button
-                onClick={() => toggleEdit('rewrittenBullets')}
-                className="text-[#88b1b8] hover:text-[#6b8f94] transition-colors"
-                aria-label="Edit Rewritten Bullets"
-                title="Edit Rewritten Bullets"
-              >
-                🖉
-              </button>
             </label>
-            {editingFields.rewrittenBullets ? (
-              <textarea
-                value={rewrittenBullets}
-                onChange={(e) => setRewrittenBullets(e.target.value)}
-                className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap"
-              />
-            ) : (
-              <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap">
-                {rewrittenBullets}
-              </pre>
-            )}
+            <pre className="w-full min-h-[150px] p-4 rounded-md border border-gray-300 bg-[#f9fbe7] font-mono whitespace-pre-wrap">
+              {rewrittenBullets}
+            </pre>
           </div>
         )}
+
 
       </div>
     </div>

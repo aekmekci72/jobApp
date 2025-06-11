@@ -21,7 +21,7 @@ const Login = () => {
             const user = userCredential.user;
             login(user.accessToken);
             localStorage.setItem('userName', email);
-            navigate("/resumeupload");
+            navigate("/home");
         } catch (error) {
             const errorCode = error.code;
             const errorMessage = error.message;
