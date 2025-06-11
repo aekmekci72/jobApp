@@ -446,9 +446,11 @@ def fetch_jobs_by_keyword(keywords):
         
         job_title = job.get("title", "").lower()
         job_description = job.get("description", "").lower()
-        
+        job_company = job.get("company", "").get("name","").lower()
+
         match_count += sum(1 for kw in lower_keywords if kw in job_title)
         match_count += sum(1 for kw in lower_keywords if kw in job_description)
+        match_count += sum(5 for kw in lower_keywords if kw in job_company)
         
         if match_count > 0:
             job_relevance_scores.append((job, match_count))
