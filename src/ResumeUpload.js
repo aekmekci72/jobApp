@@ -11,6 +11,7 @@ const ResumeUpload = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [topSkills, setTopSkills] = useState('');
   const [rewrittenBullets, setRewrittenBullets] = useState('');
+  const [loading, setLoading] = useState(false); 
   const [editingFields, setEditingFields] = useState({
     parsedText: false,
     coverLetter: false,
@@ -26,22 +27,26 @@ const ResumeUpload = () => {
 
   const loadExistingResume = async () => {
     try {
+      setLoading(true);
       const response = await axios.get('http://localhost:5000/get_resume', {
         params: { username: userName },
       });
       if (response.data.parsed_text) {
         setParsedText(response.data.parsed_text);
-        getResumeScore(response.data.parsed_text);
+        await getResumeScore(response.data.parsed_text);
       }
     } catch (error) {
       if (error.response?.status !== 404) {
         console.error('Error fetching resume:', error);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   const getResumeScore = async (resumeText) => {
     try {
+      setLoading(true);
       const fileBlob = new Blob([resumeText], { type: 'text/plain' });
 
       const formData = new FormData();
@@ -57,13 +62,14 @@ const ResumeUpload = () => {
       setResumeScore(response.data.resume_score);
     } catch (error) {
       console.error('Error scoring resume text:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-
   const handleGenerateCoverLetter = async () => {
     try {
-      console.log(userName);
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/generate_cover_letter', {
         resume_text: parsedText,
         job_description: jobDescription,
@@ -72,6 +78,8 @@ const ResumeUpload = () => {
       setCoverLetter(response.data.cover_letter);
     } catch (err) {
       console.error('Cover letter error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,12 +93,15 @@ const ResumeUpload = () => {
 
   const handleRewriteBullets = async () => {
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/rewrite_bullets', {
         resume_text: parsedText,
       });
       setRewrittenBullets(response.data.highlighted_feedback);
     } catch (err) {
       console.error('Rewrite bullets error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,6 +117,7 @@ const ResumeUpload = () => {
     formData.append('username', userName);
 
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/score_resume', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -115,6 +127,8 @@ const ResumeUpload = () => {
       setResumeScore(response.data.resume_score);
     } catch (error) {
       console.error('Error scoring resume:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,8 +137,15 @@ const ResumeUpload = () => {
   };
 
   return (
-    <div>
+    <div className="relative">
       <Navbar />
+
+      {loading && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+        </div>
+      )}
+
       <div className="max-w-6xl w-full mx-auto my-8 p-8 bg-[#fafafa] rounded-lg shadow-md font-sans">
 
         {/* Upload Section */}

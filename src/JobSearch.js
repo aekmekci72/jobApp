@@ -12,22 +12,27 @@ const CompanyAndIndustryForm = () => {
   const [keywords, setKeywords] = useState([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [selectedJob, setSelectedJob] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const userName = localStorage.getItem('userName');
 
   useEffect(() => {
-    if (userName) {
-      loadExistingResume();
-    }
-    axios
-      .get('http://localhost:5000/get_company_and_industry_data')
-      .then((response) => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (userName) {
+          await loadExistingResume();
+        }
+        const response = await axios.get('http://localhost:5000/get_company_and_industry_data');
         setCompanyTypes(response.data.company_types);
         setIndustries(response.data.industries);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching company types and industries:', error);
-      });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [userName]);
 
   const loadExistingResume = async () => {
@@ -59,12 +64,14 @@ const CompanyAndIndustryForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { keywords };
-
+    setLoading(true);
     try {
       const response = await axios.post('http://localhost:5000/submit_company_industry', data);
       setJobs(response.data.jobs || []);
     } catch (error) {
       console.error('Error submitting form:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,8 +84,15 @@ const CompanyAndIndustryForm = () => {
   };
 
   return (
-    <div>
+    <div className="relative">
       <Navbar />
+
+      {/* Full-screen overlay loader - matches ResumeUpload component */}
+      {loading && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto my-10 p-8 bg-[#fcfcfc] shadow-md rounded-lg font-sans">
         <h2 className="text-2xl font-bold mb-6 text-[#88b1b8]">Job Search by Keywords</h2>
@@ -136,13 +150,14 @@ const CompanyAndIndustryForm = () => {
                 ? 'bg-[#88b1b8] hover:bg-[#6b8f94] text-white'
                 : 'bg-gray-300 text-gray-600 cursor-not-allowed'
             }`}
-            disabled={keywords.length === 0}
+            disabled={keywords.length === 0 || loading}
           >
             Submit
           </button>
         </form>
 
-        {jobs.length > 0 && (
+        {/* Job Results - only show when not loading */}
+        {!loading && jobs.length > 0 && (
           <div className="mt-10">
             <h3 className="text-xl font-semibold text-[#88b1b8] mb-4">Job Results</h3>
             <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

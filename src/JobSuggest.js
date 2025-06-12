@@ -14,6 +14,7 @@ const JobSuggestionsForm = () => {
   const [isJobDescriptionModalOpen, setIsJobDescriptionModalOpen] = useState(false);
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const storedUserName = localStorage.getItem('userName');
@@ -25,6 +26,7 @@ const JobSuggestionsForm = () => {
 
   const loadExistingResume = async (username) => {
     try {
+      setLoading(true);
       const response = await axios.get('http://localhost:5000/get_resume', {
         params: { username },
       });
@@ -35,9 +37,10 @@ const JobSuggestionsForm = () => {
       if (error.response?.status !== 404) {
         console.error('Error fetching resume:', error);
       }
+    } finally {
+      setLoading(false);
     }
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,16 +49,20 @@ const JobSuggestionsForm = () => {
       return;
     }
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/suggest_jobs', { resume });
       setJobs(response.data.jobs || []);
       setCurrentJobIndex(0);
     } catch (error) {
       console.error('Error fetching job suggestions:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGenerateCoverLetter = async (jobDescription) => {
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/generate_cover_letter', {
         resume_text: resume,
         job_description: jobDescription,
@@ -65,11 +72,14 @@ const JobSuggestionsForm = () => {
       setIsCoverLetterModalOpen(true);
     } catch (error) {
       console.error('Error generating cover letter:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGenerateResumeFeedback = async (jobDescription) => {
     try {
+      setLoading(true);
       const response = await axios.post('http://localhost:5000/resume_feedback', {
         resume_text: resume,
         username: userName,
@@ -79,6 +89,8 @@ const JobSuggestionsForm = () => {
       setIsFeedbackModalOpen(true);
     } catch (error) {
       console.error('Error generating resume feedback:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,8 +125,16 @@ const swipeRight = () => {
   const currentJob = jobs[currentJobIndex];
 
   return (
-    <div className="min-h-screen bg-white text-gray-800">
+    <div className="min-h-screen bg-white text-gray-800 relative">
       <Navbar />
+
+      {/* Full-screen overlay loader - matches other components */}
+      {loading && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white"></div>
+        </div>
+      )}
+
       <div className="max-w-5xl mx-auto my-10 p-8 bg-[#fcfcfc] shadow-md rounded-lg font-sans">
         <h2 className="text-2xl font-bold mb-6 text-[#88b1b8]">Job Suggestions Based on Your Resume</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -129,7 +149,11 @@ const swipeRight = () => {
               placeholder="Paste your resume text here..."
             />
           </div>
-          <button type="submit" className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold">
+          <button 
+            type="submit" 
+            className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold"
+            disabled={loading}
+          >
             Get Job Suggestions
           </button>
         </form>
@@ -158,12 +182,14 @@ const swipeRight = () => {
                   <button
                     onClick={() => handleGenerateCoverLetter(currentJob.description)}
                     className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold"
+                    disabled={loading}
                   >
                     Write Cover Letter
                   </button>
                   <button
                     onClick={() => handleGenerateResumeFeedback(currentJob.description)}
                     className="px-4 py-2 bg-[#88b1b8] hover:bg-[#6b8f94] text-white rounded-md font-semibold"
+                    disabled={loading}
                   >
                     Resume Feedback
                   </button>
